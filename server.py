@@ -38,6 +38,7 @@ def read_graph(file_name, verticesInfo, edgesInfo):
 
     return (g, verticesInfo, edgesInfo)
 
+
 file_name = "edmonton-roads-2.0.1.txt"
 verticesInfo = {}  # {vertex: (latitude, longitude)}
 edgesInfo = {}  # {(vertex1, vertex2): (street_name)}
