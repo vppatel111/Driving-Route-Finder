@@ -22,18 +22,31 @@ def least_cost_path(graph, start, dest, cost):
                 vertex is always start, the last is always dest in the list.
                 Any two consecutive vertices correspond to some
                 edge in graph.
+
+    Other information:
+        todolist:   Stores the vertices we must go through to check for cost.
+                    As vertices are checked and popped out, the list will add
+                    the neighbours of the popped vertex if it hasn't already
+                    been checked.
+        reached:    Stores the information of all vertices it has reached in
+                    one component of the graph. The information is stored in a
+                    tuple as follows:
+                    (a, b, c)
+                    a = The previous edge element
+                    b = The total_cost to reach the vertex from the start
+                    c = The ordered path from the start to vertex w in list form
     """
-    todolist = queue.deque([start])  # todolist also stores "from where"
-    # reached is a dictionary containing the tuple:
-    # (other edge element, cost of edge, list of the path to reach key vertex)
+    todolist = queue.deque([start])
     reached = {start: (start, 0, [start])}
     while todolist:
         v = todolist.popleft()
         for w in g.neighbours(v): # for each neighbhour to v
-            edge_cost = cost((v,w))
+            total_cost = cost(v,w) + reached[v][1]
             if w not in reached:
-                reached[w] = (v, edge_cost, reached[v][2].append(w))  # w has just been discovered
+                reached[w] = (v, total_cost, reached[v][2].append(w))
                 todolist.append(w) # find neighbours to w
-            elif (e for i, e, l in reached[w]) > edge_cost: #elif better path cost
-                reached[w] = (v, edge_cost, reached[v][2].append(w))
+            elif reached[w][1] > total_cost: #elif better path cost
+                reached[w] = (v, total_cost, reached[v][2].append(w))
+    if dest not in reached:
+        return []
     return reached[dest][2]
