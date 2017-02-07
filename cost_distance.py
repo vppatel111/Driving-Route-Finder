@@ -8,6 +8,6 @@ def cost_distance(u, v):
         Returns:
             numeric value: the distance between the two vertices.
     '''
-    verticesInfo(u) = (x1, y1)
-    verticesInfo(v) = (x2, y2)
+    (x1, y1) = verticesInfo[u]
+    (x2, y2) = verticesInfo[v]
     return (x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)
