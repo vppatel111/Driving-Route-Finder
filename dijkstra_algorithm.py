@@ -29,11 +29,11 @@ def least_cost_path(graph, start, dest, cost):
     reached = {start: (start, 0, [start])}
     while todolist:
         v = todolist.popleft()
-        for w in g.neighbours(v): # for each neighbhour to v
-            edge_cost = cost((v,w))
+        for w in g.neighbours(v):  # for each neighbhour to v
+            edge_cost = cost((v, w))
             if w not in reached:
                 reached[w] = (v, edge_cost, reached[v][2].append(w))  # w has just been discovered
-                todolist.append(w) # find neighbours to w
-            elif (e for i, e, l in reached[w]) > edge_cost: #elif better path cost
+                todolist.append(w)  # find neighbours to w
+            elif (e for i, e, l in reached[w]) > edge_cost:  # elif better path cost
                 reached[w] = (v, edge_cost, reached[v][2].append(w))
     return reached[dest][2]

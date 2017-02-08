@@ -27,8 +27,8 @@ def read_graph(file_name, verticesInfo, edgesInfo):
 
                 if (row[0] == 'V'):
                     g.add_vertex(row[1])
-                    verticesInfo[row[1]] = (int(float(row[2]) * 1000000),
-                                            int(float(row[3]) * 1000000))
+                    verticesInfo[row[1]] = (int(float(row[2]) * 100000),
+                                            int(float(row[3]) * 100000))
                     # print("created vertex", row[1])
 
                 if (row[0] == 'E'):
@@ -42,16 +42,19 @@ def read_graph(file_name, verticesInfo, edgesInfo):
 
 # Built upon the concept introduced by pathDist
 def pathDist(v, u):
-    ''' Returns length of path
+    ''' Computes and returns the straight-line distance between the two vertices
+        v and u.
 
     Args:
         v, u (tuple): (latitude, longitude)
     Returns:
         dist = distance of path
     '''
-
-    # print("pathDist", v, u)
-    return((v[1]-u[1])*(v[1]-u[1])+(v[0]-u[0])*(v[0]-u[0]))
+    v1 = (abs(v[0]), abs(v[1]))
+    v2 = (abs(u[0]), abs(u[1]))
+    pathDist = ((v1[1]-v2[1])*(v1[1]-v2[1])+(v1[0]-v2[0])*(v1[0]-v2[0]))
+    print("pathDist", pathDist, v1, v2)
+    return pathDist
 
 
 # Further testing required
@@ -87,6 +90,8 @@ outputBuffer = []  # Buffer for outputting to std.out
 # supermin = min(verticesInfo, key=verticesInfo.get)
 # print(supermin)
 
+print(verticesInfo)
+
 for line in sys.stdin:
     line = line.split()
     # print(line)
@@ -101,12 +106,16 @@ for line in sys.stdin:
 
     # Arduino sends request for map.
     if line[0] == "R":
-        startLat = int(float(line[1]) * 1000000)
-        startLon = int(float(line[2]) * 1000000)
-        endLat = int(float(line[3]) * 1000000)
-        endLon = int(float(line[4]) * 1000000)
+        startLat = int(float(line[1]))
+        startLon = int(float(line[2]))
+        print("start lat/lon", startLat, startLon)
+        endLat = int(float(line[3]))
+        endLon = int(float(line[4]))
+        print("end lat/lon", endLat, endLon)
         start = findVertex(startLat, startLon, verticesInfo)
         end = findVertex(endLat, endLon, verticesInfo)
+        # path = least_cost_path(g, start, end, _)
+        # outputBuffer.append(len(path))
         print("start and end", start, end)
 
     # print(startLat, startLon, endLat, endLon)
