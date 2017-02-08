@@ -25,13 +25,13 @@ def read_graph(file_name, verticesInfo, edgesInfo):
                 # print(row)
 
                 if (row[0] == 'V'):
-                    g.add_vertex(row[1])
-                    verticesInfo[row[1]] = (int(float(row[2]) * 1000000),
+                    g.add_vertex(int(row[1]))
+                    verticesInfo[int(row[1])] = (int(float(row[2]) * 1000000),
                                             int(float(row[3]) * 1000000))
                     # print("created vertex", row[1])
 
                 if (row[0] == 'E'):
-                    edge = (row[1], row[2])
+                    edge = (int(row[1]), int(row[2]))
                     g.add_edge(edge)
                     edgesInfo[edge] = row[3]
                     # print("created edge", row[1], row[2])

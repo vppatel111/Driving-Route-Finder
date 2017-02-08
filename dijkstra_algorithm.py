@@ -1,3 +1,4 @@
+import queue
 def least_cost_path(graph, start, dest, cost):
     """Find and return a least cost path in graph from start
         vertex to dest vertex.
@@ -40,13 +41,13 @@ def least_cost_path(graph, start, dest, cost):
     reached = {start: (start, 0, [start])}
     while todolist:
         v = todolist.popleft()
-        for w in g.neighbours(v): # for each neighbhour to v
+        for w in graph.neighbours(v): # for each neighbhour to v
             total_cost = cost(v,w) + reached[v][1]
             if w not in reached:
-                reached[w] = (v, total_cost, reached[v][2].append(w))
+                reached[w] = (v, total_cost, reached[v][2]+[w])
                 todolist.append(w) # find neighbours to w
             elif reached[w][1] > total_cost: #elif better path cost
-                reached[w] = (v, total_cost, reached[v][2].append(w))
+                reached[w] = (v, total_cost, reached[v][2]+[w])
     if dest not in reached:
         return []
     return reached[dest][2]
