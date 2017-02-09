@@ -182,11 +182,12 @@ if __name__ == "__main__":
             start = findVertex(startLat, startLon, verticesInfo)
             end = findVertex(endLat, endLon, verticesInfo)
             shortest_path = least_cost_path(g, start, end, cost_distance)
-            outputBuffer.append(len(shortest_path))
+            outputBuffer.append("N " + str(len(shortest_path)))
             for waypoint in shortest_path:
                 (outputLat, outputLon) = verticesInfo[waypoint]
                 outputBuffer.append("W " + str(outputLat) + " " + str(outputLon))
-            outputBuffer.append("E")
+            if len(shortest_path) > 0: # Accounts for an empty path
+                outputBuffer.append("E")
             # print("start and end", start, end)
 
         # print(startLat, startLon, endLat, endLon)
