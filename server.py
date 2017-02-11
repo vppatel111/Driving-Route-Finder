@@ -2,6 +2,7 @@ import csv
 import sys
 import queue
 from math import sqrt
+from minheap import MinHeap
 
 
 def least_cost_path(graph, start, dest, cost):
@@ -43,20 +44,30 @@ def least_cost_path(graph, start, dest, cost):
                     b = The total_cost to reach the vertex from the start
                     c = The ordered path from the start to vertex w in listform
     """
-    todolist = queue.deque([start])
-    reached = {start: (start, 0, [start])}
+    #todolist = queue.deque([start])
+    todolist = MinHeap()
+    todolist.add(0, start)
+    reached = {start: (0, [start])}
+    #reached = MinHeap()
+    #reached.add(0, start)
+    #lovelyHeap = MinHeap()
     while todolist:
-        v = todolist.popleft()
-        for w in graph.neighbours(v):  # for each neighbhour to v
-            total_cost = cost(v, w) + reached[v][1]
+        #v = todolist.popleft()
+        v = todolist.pop_min()
+        if v[1] == dest:
+            break
+        for w in graph.neighbours(v[1]):  # for each neighbhour to v
+            total_cost = cost(v[1], w) + v[0]
             if w not in reached:
-                reached[w] = (v, total_cost, reached[v][2]+[w])
-                todolist.append(w)  # find neighbours to w
-            elif reached[w][1] > total_cost:  # elif better path cost
-                reached[w] = (v, total_cost, reached[v][2]+[w])
+                #reached[w] = (v[1], total_cost, reached[v[1]][2]+[w])
+                reached[w] = (total_cost, reached[v[1]][1]+[w])
+                #todolist.append(w)  # find neighbours to w
+                todolist.add(total_cost, w)
+            elif reached[w][0] > total_cost:  # elif better path cost
+                reached[w] = (total_cost, reached[v[1]][1]+[w])
     if dest not in reached:
         return []
-    return reached[dest][2]
+    return reached[dest][1]
 
 
 # NOTE: Define a cost function within the read_graph functions
