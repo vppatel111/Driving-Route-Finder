@@ -2,6 +2,7 @@ import csv
 import sys
 import queue
 from math import sqrt
+from minheap import MinHeap
 
 
 def least_cost_path(graph, start, dest, cost):
@@ -43,17 +44,21 @@ def least_cost_path(graph, start, dest, cost):
                     b = The total_cost to reach the vertex from the start
                     c = The ordered path from the start to vertex w in listform
     """
-    todolist = queue.deque([start])
+    #todolist = queue.deque([start])
+    todolist = MinHeap()
+    todolist.add(start, 0)
     reached = {start: (start, 0, [start])}
     while todolist:
-        v = todolist.popleft()
-        for w in graph.neighbours(v):  # for each neighbhour to v
-            total_cost = cost(v, w) + reached[v][1]
+        v = todolist.pop_min()
+        if v == dest:
+            continue
+        for w in graph.neighbours(v[0]):  # for each neighbhour to v
+            total_cost = cost(v[0], w) + reached[v[0]][1]
             if w not in reached:
-                reached[w] = (v, total_cost, reached[v][2]+[w])
-                todolist.append(w)  # find neighbours to w
+                reached[w] = (v[0], total_cost, reached[v[0]][2]+[w])
+                todolist.add(w, total_cost)  # find neighbours to w
             elif reached[w][1] > total_cost:  # elif better path cost
-                reached[w] = (v, total_cost, reached[v][2]+[w])
+                reached[w] = (v[0], total_cost, reached[v[0]][2]+[w])
     if dest not in reached:
         return []
     return reached[dest][2]

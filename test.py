@@ -5,9 +5,9 @@ Run using the following command in the command line (make sure you are in the ri
 '''
 import adjacencygraph
 from time import time
-from dijkstra_algorithm import least_cost_path
+#from dijkstra_algorithm import least_cost_path
 #from cost_distance import cost_distance
-from server import read_graph
+import server
 
 def cost_distance(u, v):
     ''' Computes and returns the straight-line distance between the two
@@ -24,12 +24,14 @@ def cost_distance(u, v):
     (x2, y2) = verticesInfo[v]
     return (x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)
 
+def print_coord(verticesInfo, key):
+    print("{} {}".format(verticesInfo[key][0],verticesInfo[key][1]))
+
 fileName = "edmonton-roads-2.0.1.txt"
 verticesInfo = {}
 edgesInfo = {}
 t = time()
-g, verticesInfo, edgesInfo = read_graph(fileName, verticesInfo, edgesInfo)
+g, verticesInfo, edgesInfo = server.read_graph(fileName, verticesInfo, edgesInfo)
 print(time()-t)
-shortest_path = least_cost_path(g, 314088878, 629239028, cost_distance)
+shortest_path = server.least_cost_path(g, 314088878, 629239028, cost_distance)
 print(time()-t)
-print(shortest_path)
