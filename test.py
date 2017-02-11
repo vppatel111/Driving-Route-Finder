@@ -33,5 +33,7 @@ edgesInfo = {}
 t = time()
 g, verticesInfo, edgesInfo = server.read_graph(fileName, verticesInfo, edgesInfo)
 print(time()-t)
+t = time()
 shortest_path = server.least_cost_path(g, 314088878, 629239028, cost_distance)
 print(time()-t)
+print(shortest_path)
