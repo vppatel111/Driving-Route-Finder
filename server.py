@@ -153,21 +153,20 @@ def least_cost_path(graph, start, dest, cost):
         todolist:   Stores the vertices we must go through to check for cost.
                     As vertices are checked and popped out, the list will add
                     the neighbours of the popped vertex if it hasn't already
-                    been checked.
+                    been checked. The vertices to check are prioritized by min value.
         reached:    Stores the information of all vertices it has reached in
                     one component of the graph. The information is stored in a
                     tuple as follows:
-                    (a, b, c)
-                    a = The previous edge element
-                    b = The total_cost to reach the vertex from the start
-                    c = The ordered path from the start to vertex w in listform
+                    (a, b)
+                    a = The total_cost to reach the vertex from the start
+                    b = The ordered path from the start to vertex w in listform
     """
     todolist = MinHeap()
     todolist.add(0, start)
     reached = {start: (0, [start])}
-    while todolist:
+    while todolist: #list vertices we go through, with a priority queue
         v = todolist.pop_min()
-        if v[1] == dest:
+        if v[1] == dest: #once we have found our destination, no need to continue
             break
         for w in graph.neighbours(v[1]):  # For each neighbour to v
             total_cost = cost(v[1], w) + v[0]  # Keep track of cost so far
