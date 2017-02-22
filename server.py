@@ -38,6 +38,7 @@ module.
 """
 import csv
 import sys
+from cs_message import *
 from math import sqrt
 
 
@@ -153,7 +154,8 @@ def least_cost_path(graph, start, dest, cost):
         todolist:   Stores the vertices we must go through to check for cost.
                     As vertices are checked and popped out, the list will add
                     the neighbours of the popped vertex if it hasn't already
-                    been checked. The vertices to check are prioritized by min value.
+                    been checked. The vertices to check are prioritized by min
+                    value.
         reached:    Stores the information of all vertices it has reached in
                     one component of the graph. The information is stored in a
                     tuple as follows:
@@ -164,9 +166,9 @@ def least_cost_path(graph, start, dest, cost):
     todolist = MinHeap()
     todolist.add(0, start)
     reached = {start: (0, [start])}
-    while todolist: #list vertices we go through, with a priority queue
+    while todolist:  # list vertices we go through, with a priority queue
         v = todolist.pop_min()
-        if v[1] == dest: #once we have found our destination, no need to continue
+        if v[1] == dest:  # once we have found our destination don't continue
             break
         for w in graph.neighbours(v[1]):  # For each neighbour to v
             total_cost = cost(v[1], w) + v[0]  # Keep track of cost so far
@@ -263,6 +265,59 @@ def findVertex(latitude, longitude, vertices):
                vertexDist(vertices[v1], v2))
 
 
+def server(serial_in, serial_out):
+
+    print("Server activated")
+
+    while True:
+        while True:
+            msg = receive_msg_from_client(serial_in)
+            log_msg(msg)
+            if msg[0] == "R":
+                break
+
+        # Hope that it's a properly formatted R message
+        coords = msg[2:].split()
+
+        if len(coords) != 4:
+            continue
+
+        (lat_s, lon_s, lat_e, lon_e) = coords
+        # Read in individual pieces of data.
+        startLat = int(float(lat_s))
+        startLon = int(float(lon_s))
+        endLat = int(float(lat_e))
+        endLon = int(float(lon_e))
+
+        # Find start and finish
+        start = findVertex(startLat, startLon, verticesInfo)
+        end = findVertex(endLat, endLon, verticesInfo)
+
+        # Calculate shortest path
+        shortest_path = least_cost_path(g, start, end, cost_distance)
+
+        # write the waypoints to client
+
+        # print("Sending messages")
+        n = len(shortest_path)
+        send_msg_to_client(serial_out, "N {}" .format(len(shortest_path)))
+
+        for waypoint in shortest_path:
+
+            (outputLat, outputLon) = verticesInfo[waypoint]
+            send_msg_to_client(serial_out,
+                               "W {} {}" .format(outputLat, outputLon))
+
+            msg = receive_msg_from_client(serial_in)
+            log_msg(msg)
+
+            while msg != "A\n":
+                msg = receive_msg_from_client(serial_in)
+                log_msg(msg)
+
+        send_msg_to_client(serial_out, "E")
+
+
 file_name = "edmonton-roads-2.0.1.txt"
 verticesInfo = {}  # {vertex: (latitude, longitude)}
 edgesInfo = {}  # {(vertex1, vertex2): (street_name)}
@@ -270,8 +325,22 @@ edgesInfo = {}  # {(vertex1, vertex2): (street_name)}
 g, verticesInfo, edgesInfo = read_graph(file_name, verticesInfo, edgesInfo)
 
 if __name__ == "__main__":
+    import textserial
+
+    # Setting to default values for now, use argparse later
+    serial_port_name = "/dev/ttyACM0"
+    log_msg("Opening serial port: {}".format(serial_port_name))
+    baudrate = 9600  # [bit/seconds] 115200 also works
+
+    # Open up the connection
+    with textserial.TextSerial(
+            serial_port_name, baudrate, newline=None) as ser:
+            server(ser, ser)
+
     outputBuffer = []  # Buffer for outputting to std.out
 
+"""
+    # Looks like this code needs to be moved elsewhere.
     for line in sys.stdin:
         line = line.split()
 
@@ -285,20 +354,4 @@ if __name__ == "__main__":
 
         # Arduino sends request for map.
         if line[0] == "R":
-            # Read in individual pieces of data.
-            startLat = int(float(line[1]))
-            startLon = int(float(line[2]))
-            endLat = int(float(line[3]))
-            endLon = int(float(line[4]))
-            # Find start and finish
-            start = findVertex(startLat, startLon, verticesInfo)
-            end = findVertex(endLat, endLon, verticesInfo)
-            # Calculate shortest path
-            shortest_path = least_cost_path(g, start, end, cost_distance)
-            print("N " + str(len(shortest_path)))  # Print number of waypoint
-            for waypoint in shortest_path:  # Fill up output buffer.
-                (outputLat, outputLon) = verticesInfo[waypoint]
-                outputBuffer.append("W " + str(outputLat) + " " +
-                                    str(outputLon))
-            if len(shortest_path) > 0:  # Accounts for an empty path
-                outputBuffer.append("E")
+"""

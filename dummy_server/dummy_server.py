@@ -56,7 +56,7 @@ def protocol(serial_in, serial_out):
 
             msg = receive_msg_from_client(serial_in)
             log_msg(msg)
-                
+
         send_msg_to_client(serial_out, "E")
 
 
@@ -68,7 +68,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
         )
 
-    parser.add_argument("-d0", 
+    parser.add_argument("-d0",
         help="Debug off",
         action="store_false",
         dest="debug")
@@ -85,7 +85,7 @@ def main():
     debug = args.debug
 
     set_logging(debug)
-    
+
     # this imports serial, and provides a useful wrapper around it
     import textserial
 
@@ -104,6 +104,6 @@ def main():
         serial_port_name, baudrate, newline=None) as ser:
         protocol(ser, ser)
 
+
 if __name__ == "__main__":
     main()
-

@@ -7,6 +7,7 @@ Things we need to get done:
 	--> the server must switch to communicating with the Arduino through a serial port via the help of the pyserial package
 	--> both the client and the server must implement timeouts when waiting for a reply from the other party (more on timeouts below)
 	--> Both the client and the server should reset their states upon receiving a message which does not make sense in their current state
+	--> Done in python
 
 ---receiving the resulting path
 	--> If they select new start and destination points, a new path should be retrieved from the server
@@ -14,6 +15,7 @@ Things we need to get done:
 ---displaying the path overlaid on the map
 	--> while the route is displayed, we should still be able to 	operate around the map as usual
 	--> You may decide whether you want to still display the route when the user has already selected a start point but has not yet selected a destination point
+	--> It seems that we are using c++ code for this part.
 
 ---timeout
 	--> The timeout is effective when:
@@ -23,3 +25,4 @@ Things we need to get done:
 	--> When a timeout expires:
 		--> server should reset its state to waiting for a client to start communicating with it
 		--> the Arduino should restart the communication attempt
+	--> Finite state machine required
