@@ -4,13 +4,14 @@
 #include <errno.h>
 #include <assert13.h>
 #include "dprintf.h"
+#include <stdio.h>
 
 /* YOUR TASK:
     replace the srv_get_pathlen and srv_get_waypoints functions
     with the proper implementations.
 */
 
-/*  
+/*
     Gets the length of the path between start and end.
 
     The function sends a request to the server listening on the serial
@@ -30,14 +31,18 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
     size_t buf_size = 32;
     size_t buf_len = 0;
     char buf[buf_size];
+    char field[buf_size];
+    const char* sep = " ";
 
-    int16_t path_len = 0;
+    int32_t path_len = 0;
 
-    // start the server communication with a path request
-    dprintf("Requesting lat %ld lon %ld to lat %ld lon %ld", 
-        start.lat, start.lon, end.lat, end.lon);
+    dprintf("Beginning finding pathLen");
+    serial_readline(buf, buf_size);
+    dprintf(buf);
+    string_read_field(buf, 2, field, buf_size, sep);
+    dprintf(field);
+    path_len = string_get_int(field);
 
-    path_len = 8;
     dprintf("Got path_len of %d", path_len);
 
     // now you will expect to get a N dddddd message back from server
@@ -51,7 +56,7 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
 
     The server wants to send path_len points, but we can only accept
     max_path_len. So we will continue reading the waypoints past
-    max_path_len, but not store them. 
+    max_path_len, but not store them.
 
     waypoints - an array of [max_path_len] waypoints, each one being
         a LonLat32 coordinate pair.
@@ -61,7 +66,7 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
         waypoints are discarded by the client, even though the protocol
         continues.
 
-    max_path_len - the maximum mumber of waypoints that can fit int the 
+    max_path_len - the maximum mumber of waypoints that can fit int the
         waypoints array
 
     Returns
@@ -69,13 +74,19 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
         >= 0 if ok.
 */
 
-int16_t srv_get_waypoints(LonLat32* waypoints, 
-    int16_t path_len, int16_t max_path_len) {
+int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
+                          int16_t max_path_len) {
 
     int32_t lat;
     int32_t lon;
+    size_t buf_size = 32;
+    size_t buf_len = 0;
+    char buf[buf_size];
+    char field[buf_size];
+    const char* sep = " ";
 
-    dprintf("Fetching %d way points, keeping at most %d", 
+    Serial.print("A\n");
+    dprintf("Fetching %d way points, keeping at most %d",
         path_len, max_path_len);
 
     if ( path_len <= 0 || max_path_len < 0 ) {
@@ -85,17 +96,49 @@ int16_t srv_get_waypoints(LonLat32* waypoints,
 
     // WARNING - server uses lat lon order, client uses lon lat !
     for (int16_t i=0; i < path_len; ++i) {
-        lon = i;
-        lat = i;
-        dprintf("Got %d |%s|", lat, lon);
 
-        if ( i < max_path_len ) {
-            // skip if too many points
-            waypoints[i] = LonLat32(lon, lat);
-            }
-        }
+      int16_t str_start = 2;
+      int16_t next_start = 0;
 
-    return 0;
+      serial_readline(buf, buf_size);
+      dprintf(buf);
+
+      next_start = string_read_field(buf, str_start, field, buf_size, sep);
+      //dprintf(field);
+      lat = string_get_int(field);
+      //dprintf("Got lat: %ld", lat); It doesn't seem to print values correctly
+
+      str_start = next_start;
+
+      next_start = string_read_field(buf, str_start, field, buf_size, sep);
+      //dprintf(field);
+      lon = string_get_int(field);
+      //dprintf("Got lon: %d", lon);
+
+      Serial.print("A\n");
+      waypoints[i] = LonLat32(lon, lat);
+
+    }
+
+    char field2[buf_size];
+
+    serial_readline(buf, buf_size);
+    string_read_field(buf, 0, field2, buf_size, sep);
+    dprintf(field2);
+
+    char compe[] = "E\n";
+    char compe2[] = "E";
+
+    //Too late to check which one works.
+    if (strcmp(field2, compe)) {
+      return 1;
+    } else if (strcmp(field2, compe2)) {
+      return 1;
+    } else {
+      dprintf("Error: Did not process all waypoints");
+      return 0;
+    }
+
     }
 
 
@@ -114,7 +157,7 @@ int16_t srv_get_waypoints(LonLat32* waypoints,
 
     Preconditions:  None.
 
-    Postconditions: Function will block until a full newline has been 
+    Postconditions: Function will block until a full newline has been
         read, or the maximum length has been reached. Afterwards the new
         string will be stored in the buffer passed to the function.
 
@@ -172,13 +215,13 @@ int16_t serial_readline(char *line, uint16_t line_size) {
     separation characters.
 
 */
-int16_t string_read_field(const char *str, uint16_t str_start, 
+int16_t string_read_field(const char *str, uint16_t str_start,
     char *field, uint16_t field_size, const char *sep) {
 
     // Want to read from the string until we encounter the separator.
 
     // Character that we are reading from the string.
-    uint16_t str_index = str_start;    
+    uint16_t str_index = str_start;
 
     while (1) {
         if ( str[str_index] == '\0') {
@@ -190,23 +233,23 @@ int16_t string_read_field(const char *str, uint16_t str_start,
 
         if (strchr(sep, str[str_index])) {
             // field finished, skip over the separator character.
-            str_index++;    
+            str_index++;
             break;
             }
 
         // Copy the string character into buffer and move over to next
-        *field = str[str_index];    
+        *field = str[str_index];
         field++;
         field_size--;
         // Move on to the next character.
-        str_index++;    
+        str_index++;
         }
 
     // Make sure to add NULL termination to our new string.
     *field = '\0';
 
     // Return the index of where the next token begins.
-    return str_index;    
+    return str_index;
     }
 
 /*
@@ -217,7 +260,7 @@ int16_t string_read_field(const char *str, uint16_t str_start,
 
     Preconditions:  The string should probably represent an integer value.
 
-    Postconditions: 
+    Postconditions:
         Will return the equivalent integer. If an error occured the
         blink assert may be triggered, and sometimes zero is just
         returned from this function because EINVAL does not exist for

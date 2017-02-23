@@ -265,6 +265,7 @@ def findVertex(latitude, longitude, vertices):
                vertexDist(vertices[v1], v2))
 
 
+# BUG: Currently doesn't handle resetting and stuff.
 def server(serial_in, serial_out):
 
     print("Server activated")
@@ -272,6 +273,7 @@ def server(serial_in, serial_out):
     while True:
         while True:
             msg = receive_msg_from_client(serial_in)
+            log_msg("Got path: ")
             log_msg(msg)
             if msg[0] == "R":
                 break
@@ -300,22 +302,29 @@ def server(serial_in, serial_out):
 
         # print("Sending messages")
         n = len(shortest_path)
-        send_msg_to_client(serial_out, "N {}" .format(len(shortest_path)))
+        send_msg_to_client(serial_out, "N {}" .format(n))
 
-        for waypoint in shortest_path:
-
-            (outputLat, outputLon) = verticesInfo[waypoint]
-            send_msg_to_client(serial_out,
-                               "W {} {}" .format(outputLat, outputLon))
-
-            msg = receive_msg_from_client(serial_in)
-            log_msg(msg)
-
-            while msg != "A\n":
+        if n > 0:
+            while msg != "A\n":  # Wait until server asks for more output.
                 msg = receive_msg_from_client(serial_in)
                 log_msg(msg)
 
-        send_msg_to_client(serial_out, "E")
+            for waypoint in shortest_path:
+
+                (outputLat, outputLon) = verticesInfo[waypoint]
+                send_msg_to_client(serial_out,
+                                   "W {} {}" .format(outputLat, outputLon))
+
+                msg = receive_msg_from_client(serial_in)
+                log_msg(msg)
+
+                while msg != "A\n":
+                    msg = receive_msg_from_client(serial_in)
+                    log_msg(msg)
+
+            send_msg_to_client(serial_out, "E")
+        else:
+            send_msg_to_client(serial_out, "N 0")
 
 
 file_name = "edmonton-roads-2.0.1.txt"

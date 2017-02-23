@@ -1,11 +1,12 @@
 #include <Arduino.h>
-#include <Adafruit_ST7735.h> 
+#include <Adafruit_ST7735.h>
 #include <SD.h>
 #include <mem_syms.h>
 
 #include "map.h"
 #include "serial_handling.h"
 #include "dprintf.h"
+
 
 // map scrolling
 // #define DEBUG_SCROLLING
@@ -33,7 +34,7 @@ const uint8_t zoom_out_pin = 2;
 const uint8_t sd_cs = 5;
 const uint8_t tft_cs = 6;
 const uint8_t tft_dc = 7;
-const uint8_t tft_rst = 8;    
+const uint8_t tft_rst = 8;
 
 // Arduino analog input pin for the horizontal on the joystick.
 const uint8_t joy_pin_x = 1;
@@ -183,23 +184,23 @@ void loop() {
     int32_t y_cur;
 
     /*
-        Zooming is an expensive operation.  
-        
+        Zooming is an expensive operation.
+
         If the map is zoomed in or out we need to do a redraw, and will
         center the display window about the cursor. Thus a zoom in-out
         will re-center over a mis-positioned cursor!
 
         We also want to redraw the path, if any that is on the screen.
 
-        We detect requests for zooming through the interrupt routines, 
+        We detect requests for zooming through the interrupt routines,
         but just mark the zoom as pending, and the do the zooming at this
         point.
 
         zoom_pending means we need to zoom the map, and no further
         zooms will be pending until we updated the shared state.
     */
-    
-    /* 
+
+    /*
         Critical section to determined if zoom is pending on the basis
         of the shared variables.   Critical sections start by turning
         off interrupts, and then enabling them after the critical operation.
@@ -212,29 +213,29 @@ void loop() {
 
     if ( zoom_pending ) {
         #ifdef DEBUG_SCROLLING
-            dprintf("Zoom from map %d, x %d y %d", 
+            dprintf("Zoom from map %d, x %d y %d",
                 current_map_num, cursor_map_x, cursor_map_y);
         #endif
 
         /*
-            It is safe to access shared_new_map_num outside of critical 
+            It is safe to access shared_new_map_num outside of critical
             section, since it is one byte, and access is atomic.  Also,
             the interrupt routines will not modify the shared variables
             until they are equal again.
         */
         if ( current_map_num != shared_new_map_num ) {
-            dprintf("Zoom from map %d to %d", 
+            dprintf("Zoom from map %d to %d",
                 current_map_num, shared_new_map_num);
             }
         uint8_t zoomed_map_num = set_zoom();
 
-        // center the display window around the cursor 
+        // center the display window around the cursor
         move_window_to( cursor_map_x - display_window_width/2
                       , cursor_map_y - display_window_height/2
             );
 
         #ifdef DEBUG_SCROLLING
-            dprintf("Zoom to map %d, x %d y %d", 
+            dprintf("Zoom to map %d, x %d y %d",
                 current_map_num, cursor_map_x, cursor_map_y);
         #endif
 
@@ -263,7 +264,7 @@ void loop() {
         uint16_t cursor_screen_x;
         uint16_t cursor_screen_y;
         if (get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y)) {
-            // if the cursor is visible, then adjust the display to 
+            // if the cursor is visible, then adjust the display to
             // to scroll if near the edge.
 
             if (cursor_screen_x < screen_left_margin) {
@@ -288,9 +289,9 @@ void loop() {
                 // move the display window, leaving cursor at same lat-lon
                 move_window_to(new_screen_map_x, new_screen_map_y);
                 update_display_window = 1;
-            } 
+            }
             else {
-                // erase old cursor, move, and draw new one, no need to 
+                // erase old cursor, move, and draw new one, no need to
                 // redraw the underlying map tile
                 erase_cursor();
                 move_cursor_by(dx, dy);
@@ -339,10 +340,21 @@ void loop() {
             end = p;
             request_state = RS_WAIT_FOR_START;
 
-            dprintf("Request for path");
+            // start the server communication with a path request
+            dprintf("Requesting lat %ld lon %ld to lat %ld lon %ld",
+                start.lat, start.lon, end.lat, end.lon);
 
+            Serial.print("R ");
+            Serial.print(start.lat);
+            Serial.print(" ");
+            Serial.print(start.lon);
+            Serial.print(" ");
+            Serial.print(end.lat);
+            Serial.print(" ");
+            Serial.println(end.lon);
+
+            dprintf("Getting path len");
             int16_t path_len = srv_get_pathlen(start, end);
-            dprintf("Got path, length %d", path_len);
 
             // NOTE: path_len from server may be too long to store in
             // waypoints with a max_path_len
@@ -352,30 +364,40 @@ void loop() {
 
                 if ( path_len > max_path_len ) {
                     cur_path_len = max_path_len;
-                    }
+                }
                 else {
                     cur_path_len = path_len;
-                    }
+                }
 
-                if (srv_get_waypoints(waypoints, path_len, max_path_len) >= 0){
+
+                if (srv_get_waypoints(waypoints, path_len, max_path_len) >= 0) {
                     /*
                         YOUR TASK: This is a place holder for the code you need
                         to write. This simply generates a diagnostic message.
+                        TODO: Account for over 100 paths.
+                        BUG: Breaks when on the same spot
+                        Server doesn't entirely work
                     */
+
+                    //TODO: Heres where you draw the path
+
+                    //Check if values are correctly assigned.
                     dprintf("Waypoints (lat, lon):");
                     for (int16_t i=0; i < cur_path_len; i++) {
-                        dprintf("%d: %ld %ld", 
+                        dprintf("%d: %ld %ld",
                             i, waypoints[i].lat, waypoints[i].lon);
-                        }
                     }
-                } 
+                }
+
+              }
+
             }  // end request path
         } // end of select_button_event processing
 
-    // do we have to redraw the map tile?  
+    // do we have to redraw the map tile?
     if (update_display_window) {
         #ifdef DEBUG_SCROLLING
-            dprintf("Screen update map %d lon %ld lat %ld", 
+            dprintf("Screen update map %d lon %ld lat %ld",
                 current_map_num, cursor_lon, cursor_lat);
         #endif
 
@@ -385,17 +407,17 @@ void loop() {
         // find the waypoints on the current tile and draw as lines
         if ( cur_path_len > 1 ) {
             /*
-                YOUR TASK: Map the waypoints into map locations, which 
+                YOUR TASK: Map the waypoints into map locations, which
                 are then mapped into screen locations, and draw them if
                 they are visible.
             */
-            }
+        }
 
         // force a redisplay of status message
         clear_status_msg();
 
         if ( zoom_pending ) {
-            /* 
+            /*
               Finally, after this round of display processing, enable
               zooming occur again. NOTE: critical section, update the shared
               map num variable to indicate zoom processed.
@@ -407,17 +429,17 @@ void loop() {
             interrupts();
             dprintf("Zoom re-enabled");
 
-            }
         }
+    }
 
     // always update the status message area if message changes
     // Indicate which point we are waiting for
     if (request_state == RS_WAIT_FOR_START) {
         status_msg("FROM?");
-        }
+    }
     else {
         status_msg("TO?");
-        }
+    }
 }
 
 char* prev_status_msg = 0;
@@ -454,7 +476,7 @@ void initialize_screen() {
     tft.setCursor(0, 0);
     tft.setTextColor(0x0000);
     tft.setTextSize(1);
-    tft.fillScreen(BLUE);    
+    tft.fillScreen(BLUE);
 }
 
 void initialize_sd_card() {
@@ -467,7 +489,7 @@ void initialize_sd_card() {
         #endif
 
         // Just wait, stuff exploded.
-        while (1) {} 
+        while (1) {}
         }
 
     #ifdef DEBUG_SD_CARD
@@ -546,7 +568,7 @@ uint8_t process_joystick(int16_t *dx, int16_t *dy) {
         button_prev_time = cur_time;
 
         // true if button is pressed
-        button_state = (LOW == digitalRead(joy_pin_button)); 
+        button_state = (LOW == digitalRead(joy_pin_button));
 
         // if a press is followed by a release, we will have an event:
         button_press_event = (prev_button_state && !button_state);
@@ -565,8 +587,8 @@ uint8_t process_joystick(int16_t *dx, int16_t *dy) {
     There are two shared variables, which must only be updated in
     critical sections precisely located in the code flow.
 
-    When a zoom in or out button is pressed, if 
-        shared_new_map_num == shared_current_map_num, then 
+    When a zoom in or out button is pressed, if
+        shared_new_map_num == shared_current_map_num, then
     it is safe to change shared_new_map_num to reflect the new zoom
     level. No further changes can occur until the current_map_num is
     finally set to the shared one.
