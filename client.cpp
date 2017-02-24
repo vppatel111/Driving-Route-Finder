@@ -74,6 +74,129 @@ uint16_t max_path_len;
 uint16_t cur_path_len;
 LonLat32* waypoints;
 
+struct path_maker {
+/*
+Decided to make a struct to organize all the functions used in this assignment.
+NOTE: Incase we needed extra memory, I decided that the waypoints will only change
+      values rather than storing the new converted waypoint values into another array.
+*/
+  // variable used to see if there is already a path printed on the screen
+  bool prev_exist;
+
+  path_maker() {
+    this->prev_exist = false;
+  }
+
+  void convert_wp_to_map_coord(LonLat32* waypoints) {
+    // converts to the given waypoints to map coordinates for client use
+    for (int index = 0; index < cur_path_len; index++) {
+      waypoints[index].lon = longitude_to_x(current_map_num, waypoints[index].lon);
+      waypoints[index].lat = latitude_to_y(current_map_num, waypoints[index].lat);
+      dprintf("%ld, %ld, %d, %d", waypoints[index].lon, waypoints[index].lat, screen_map_x, screen_map_y);
+    }
+  }
+
+  void convert_wp_to_graph_coord(LonLat32* waypoints) {
+    // converts map coordinates of waypoints to graph coordinates given initially by server
+    for (int index = 0; index < cur_path_len; index++) {
+      waypoints[index].lon = x_to_longitude(shared_current_map_num, waypoints[index].lon);
+      waypoints[index].lat = y_to_latitude(shared_current_map_num, waypoints[index].lat);
+      dprintf("%ld, %ld, %d, %d", waypoints[index].lon, waypoints[index].lat, screen_map_x, screen_map_y);
+    }
+  }
+
+  bool is_cursor_on_route(LonLat32 wp0, LonLat32 wp1, uint16_t cursor_screen_x, uint16_t cursor_screen_y) {
+    /*
+    the points (a,c) is wp0 and (b,d) is wp1. There are 3 special cases.
+    Case 1:
+      wp0.lon == wp1.lon (infinite slope);
+      Then cursor is on the route iff c =< y =< d if c <= d or vice-versa
+    Case 2:
+      wp0.lat == wp1.lat (0 slope);
+      Then cursor is on the route iff a =< x =< b if a <= b or vice-versa
+    Case 3:
+      Let m be the slope, then m = (d-c)/(b-a) and y(x) = m(x-a) + c.
+      Let cursor_screen_x = x. Then if y(x) == cursor_screen_y, then the cursor
+      must be on the line.
+    */
+    int32_t a = wp0.lon, b = wp1.lon, c = wp0.lat, d = wp1.lat;
+    int32_t x = cursor_screen_x;
+    // case 1
+    if ((a == b) && ((c <= cursor_screen_y && cursor_screen_y <= d) || (d <= cursor_screen_y && cursor_screen_y <= c)))
+      return true;
+    // case 2
+    if ((c == d) && ((a <= cursor_screen_y && cursor_screen_y <= b) || (b <= cursor_screen_y && cursor_screen_y <= a)))
+      return true;
+    // case 3
+    int32_t y = (x-a)*(d-c)/(b-a) + c;
+    if (cursor_screen_y == y)
+      return true;
+    return false;
+  }
+
+  bool is_route_on_screen(LonLat32 wp0, LonLat32 wp1) {
+    /*
+    the point (a,c) is wp0 and (b,d) is wp1
+    if the wp is between the boundaries of the screen, return true; else false.
+    */
+    int32_t a = wp0.lon, b = wp1.lon, c = wp0.lat, d = wp1.lat;
+    int32_t boundary_x0 = screen_map_x, boundary_x1 = screen_map_x + 127;
+    int32_t boundary_y0 = screen_map_y, boundary_y1 = screen_map_y + 159;
+
+    if ((boundary_x0 < a && a < boundary_x1) && (boundary_x0 < b && b < boundary_x1)) {
+      return true;
+    }
+    else if ((boundary_y0 < c && c < boundary_x1) && (boundary_x0 < d && d < boundary_x1)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  int32_t wp_to_screen_x(int32_t wp_x) {
+    // returns the given x coordinate of the wp ON THE SCREEN
+    int32_t r = wp_x - screen_map_x;
+    return constrain(r, 0, 128);
+  }
+
+  int32_t wp_to_screen_y(int32_t wp_y) {
+    // returns the given y coordinate of the wp ON THE SCREEN
+    int32_t r = wp_y - screen_map_y;
+    return constrain(r, 0, 160);
+  }
+
+  void print_to_lcd(LonLat32* wp) {
+    // function that prints the path onto the lcd screen
+    for (int i = 0; i < cur_path_len-1; i++) {
+      if (is_route_on_screen(wp[i], wp[i+1])) {
+        //x0 = wp_to_screen_x(wp[i].lon), x1 = wp_to_screen_x(wp[i+1].lon)
+        //y0 = wp_to_screen_y(wp[i].lat), y1 = wp_to_screen_y(wp[i+1].lat)
+         tft.drawLine(
+           wp_to_screen_x(wp[i].lon), wp_to_screen_y(wp[i].lat),
+           wp_to_screen_x(wp[i+1].lon), wp_to_screen_y(wp[i+1].lat),
+           0x0000); // color = black
+      }
+    }
+    this->prev_exist = true;
+  }
+
+  void print_only_edge(LonLat32* wp) {
+    //yet to be tested
+    uint16_t cursor_screen_x, cursor_screen_y;
+    get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y);
+    for (int i = 0; i < cur_path_len-1; i++) {
+      if (is_cursor_on_route(wp[i], wp[i+1], cursor_screen_x, cursor_screen_y)) {
+        tft.drawLine(
+          wp_to_screen_x(wp[i].lon), wp_to_screen_y(wp[i].lat),
+          wp_to_screen_x(wp[i+1].lon), wp_to_screen_y(wp[i+1].lat),
+          0x0000); // color = black
+      }
+    }
+  }
+
+} path;
+
 void setup() {
     Serial.begin(9600);
     Serial.println("Starting...");
@@ -378,15 +501,14 @@ void loop() {
                         BUG: Breaks when on the same spot
                         Server doesn't entirely work
                     */
-
                     //TODO: Heres where you draw the path
-
                     //Check if values are correctly assigned.
                     dprintf("Waypoints (lat, lon):");
                     for (int16_t i=0; i < cur_path_len; i++) {
                         dprintf("%d: %ld %ld",
                             i, waypoints[i].lat, waypoints[i].lon);
                     }
+                    path.convert_wp_to_map_coord(waypoints);
                 }
 
               }
@@ -411,6 +533,7 @@ void loop() {
                 are then mapped into screen locations, and draw them if
                 they are visible.
             */
+            path.print_to_lcd(waypoints);
         }
 
         // force a redisplay of status message
@@ -422,13 +545,16 @@ void loop() {
               zooming occur again. NOTE: critical section, update the shared
               map num variable to indicate zoom processed.
             */
-
+            path.convert_wp_to_graph_coord(waypoints);
             noInterrupts();
             shared_new_map_num = current_map_num;
             shared_current_map_num = current_map_num;
             interrupts();
             dprintf("Zoom re-enabled");
-
+            if (path.prev_exist) {
+              path.convert_wp_to_map_coord(waypoints);
+              path.print_to_lcd(waypoints);
+            }
         }
     }
 

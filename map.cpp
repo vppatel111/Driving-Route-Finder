@@ -23,7 +23,7 @@ to position (screen_map_x, screen_map_y) in the map tile.
 
 The cursor can be anywhere on the map, so it may not be visible in the
 current display window.  It is visible if
-screen_map_x < 
+screen_map_x <
 */
 
 extern Adafruit_ST7735 tft;
@@ -52,7 +52,7 @@ int32_t cursor_lat;
 
 const uint8_t num_maps = 6;
 
-/* 
+/*
 Map limits: a pixel position on map i must lie in the interval
 0 <= x <= map_x_limit[i]
 0 <= y <= map_y_limit[i]
@@ -72,13 +72,13 @@ lcd_image_t map_tiles[] = {
 
 map_box_t map_box[] = {
     { // map 0 zoom 11
-        (int32_t)     5364463,    //   53.6446378248565 
-        (int32_t)   -11373047,    // -113.73046875 
+        (int32_t)     5364463,    //   53.6446378248565
+        (int32_t)   -11373047,    // -113.73046875
         (int32_t)     5343572,    //   53.4357192066942
         (int32_t)   -11337891,    // -113.37890625
     },
     { // map 1 zoom 12
-        (int32_t)     5364464,    //   53.6446378248565 
+        (int32_t)     5364464,    //   53.6446378248565
         (int32_t)   -11373047,    // -113.73046875
         (int32_t)     5343572,    //   53.4357192066942
         (int32_t)   -11337891,    // -113.37890625
@@ -93,7 +93,7 @@ map_box_t map_box[] = {
         (int32_t)     5360554,    //   53.605544099238
         (int32_t)   -11368652,    // -113.6865234375
         (int32_t)     5339643,    //   53.396432127096
-        (int32_t)   -11333496,    // -113.3349609375 
+        (int32_t)   -11333496,    // -113.3349609375
     },
     { // map 4 zoom 15
         (int32_t)     5360554,    //   53.605544099238
@@ -156,15 +156,15 @@ void initialize_map() {
 }
 
 uint8_t zoom_in() {
-    if (shared_new_map_num < num_maps-1) { 
-        shared_new_map_num++; 
+    if (shared_new_map_num < num_maps-1) {
+        shared_new_map_num++;
     }
     return shared_new_map_num;
 }
 
 uint8_t zoom_out() {
-    if (shared_new_map_num > 0) { 
-        shared_new_map_num--; 
+    if (shared_new_map_num > 0) {
+        shared_new_map_num--;
     }
     return shared_new_map_num;
 }
@@ -185,7 +185,7 @@ uint8_t set_zoom() {
 
     return current_map_num;
 }
-        
+
 
 void draw_map_screen() {
 #ifdef DEBUG
@@ -203,16 +203,16 @@ void draw_map_screen() {
     lcd_image_draw(&map_tiles[current_map_num], &tft
         , screen_map_x, screen_map_y
         , 0, 0, 128, 160);
-    
+
 }
 
 
 uint8_t is_cursor_visible() {
-    uint8_t r = 
+    uint8_t r =
         screen_map_x < cursor_map_x &&
             cursor_map_x < screen_map_x + display_window_width &&
                 screen_map_y < cursor_map_y &&
-                    cursor_map_y < screen_map_y + display_window_height; 
+                    cursor_map_y < screen_map_y + display_window_height;
 
 #ifdef IGNORE
     if (!r) {
@@ -297,11 +297,9 @@ void move_cursor_to(int16_t x, int16_t y) {
     // move cursor on map
     cursor_map_x = constrain(x, 0, map_x_limit[current_map_num]);
     cursor_map_y = constrain(y, 0, map_y_limit[current_map_num]);
-
     // then update cursor lat and long - we need this because that is the
     // only thing that will survive zooming.
 
     cursor_lon = x_to_longitude(current_map_num, cursor_map_x);
     cursor_lat = y_to_latitude(current_map_num, cursor_map_y);
 }
-
