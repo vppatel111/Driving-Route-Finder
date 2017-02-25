@@ -172,15 +172,15 @@ def __main():
         # Arduino to mark the end of lines, hence we need to set the
         # newline parameter to '\n':
 
-        with TextSerial(port, baud, newline='\n') as ser:
-            for i in range(50):
-                msg = 'hello'
-                print("Sending:", msg)
-                print(msg, file=ser)
-                line = ser.readline()
-                print("Got:", line.rstrip('\n'))
+        # with TextSerial(port, baud, newline='\n') as ser:
+        #     for i in range(50):
+        #         msg = 'hello'
+        #         print("Sending:", msg)
+        #         print(msg, file=ser)
+        #         line = ser.readline()
+        #         print("Got:", line.rstrip('\n'))
         print("Closed serial port.")
-        timeout = None
+        timeout = 5
         print("Re-running the test with a timeout of %s seconds" % timeout)
         print("First.. waiting 5 seconds..")
         import time

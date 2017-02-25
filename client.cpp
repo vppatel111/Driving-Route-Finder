@@ -50,6 +50,7 @@ void initialize_joystick();
 uint8_t process_joystick(int16_t *dx, int16_t *dy);
 void status_msg(char *msg);
 void clear_status_msg();
+void flush_incSerial();
 
 // Interrupt routines for zooming in and out, and their shared
 // state
@@ -116,7 +117,7 @@ void setup() {
     delay(1000);
 
     // allocate the waypoints buffer
-    max_path_len = 100;
+    max_path_len = 300;
 
     /* guard against too many waypoints taking up all available memory */
     if ( max_path_len * sizeof(LonLat32) > AVAIL_MEM - memory_low_mark ) {
@@ -354,18 +355,15 @@ void loop() {
             Serial.println(end.lon);
 
             dprintf("Getting path len");
-            int16_t path_len = srv_get_pathlen(start, end);
 
-            // NOTE: path_len from server may be too long to store in
-            // waypoints with a max_path_len
+            int16_t path_len = srv_get_pathlen(start, end);
 
             if ( path_len > 0 ) {
                 update_display_window = 1;
 
                 if ( path_len > max_path_len ) {
                     cur_path_len = max_path_len;
-                }
-                else {
+                } else {
                     cur_path_len = path_len;
                 }
 
@@ -375,11 +373,7 @@ void loop() {
                         YOUR TASK: This is a place holder for the code you need
                         to write. This simply generates a diagnostic message.
                         TODO: Account for over 100 paths.
-                        BUG: Breaks when on the same spot
-                        Server doesn't entirely work
                     */
-
-                    //TODO: Heres where you draw the path
 
                     //Check if values are correctly assigned.
                     dprintf("Waypoints (lat, lon):");
@@ -387,11 +381,19 @@ void loop() {
                         dprintf("%d: %ld %ld",
                             i, waypoints[i].lat, waypoints[i].lon);
                     }
+                } else {
+                  dprintf("Flush the ports boogaloo version");
+                  flush_incSerial();
                 }
 
+              } else {
+                dprintf("Flush the ports");
+                flush_incSerial();
               }
 
             }  // end request path
+            flush_incSerial();
+            Serial.flush();
         } // end of select_button_event processing
 
     // do we have to redraw the map tile?
@@ -443,6 +445,13 @@ void loop() {
 }
 
 char* prev_status_msg = 0;
+
+// Flushes the incoming stream of the serial port
+void flush_incSerial() {
+  while(Serial.available()) {
+    Serial.read();
+  }
+}
 
 void clear_status_msg() {
     status_msg("");

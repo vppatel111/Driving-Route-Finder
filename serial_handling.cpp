@@ -6,11 +6,6 @@
 #include "dprintf.h"
 #include <stdio.h>
 
-/* YOUR TASK:
-    replace the srv_get_pathlen and srv_get_waypoints functions
-    with the proper implementations.
-*/
-
 /*
     Gets the length of the path between start and end.
 
@@ -33,13 +28,34 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
     char buf[buf_size];
     char field[buf_size];
     const char* sep = " ";
+    char validCommand[] = "N";
+    int next_start = 0;
+    int32_t timeout = 1000;
 
     int32_t path_len = 0;
 
     dprintf("Beginning finding pathLen");
-    serial_readline(buf, buf_size);
+    //serial_readline(buf, buf_size, timeout);
+    if (!serial_readline(buf, buf_size, timeout)) {
+      dprintf("No data recieved");
+      return(-1);
+    } else {
+      dprintf("Data recieved");
+    }
     dprintf(buf);
-    string_read_field(buf, 2, field, buf_size, sep);
+
+    // Check for valid command
+    next_start = string_read_field(buf, 0, field, buf_size, sep);
+    dprintf(field);
+
+    if (strcmp(field, validCommand) == 0) {
+      dprintf("Valid pathlen");
+    } else {
+      dprintf("Invalid pathlen");
+      return(-1);
+    }
+
+    string_read_field(buf, next_start, field, buf_size, sep);
     dprintf(field);
     path_len = string_get_int(field);
 
@@ -84,6 +100,7 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
     char buf[buf_size];
     char field[buf_size];
     const char* sep = " ";
+    int32_t timeout = 10000;
 
     Serial.print("A\n");
     dprintf("Fetching %d way points, keeping at most %d",
@@ -92,7 +109,7 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
     if ( path_len <= 0 || max_path_len < 0 ) {
         dprintf("Bad length %d or max %d", path_len, max_path_len);
         return -1;
-        }
+    }
 
     // WARNING - server uses lat lon order, client uses lon lat !
     for (int16_t i=0; i < path_len; ++i) {
@@ -100,7 +117,13 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
       int16_t str_start = 2;
       int16_t next_start = 0;
 
-      serial_readline(buf, buf_size);
+      //serial_readline(buf, buf_size, timeout);
+      if (!serial_readline(buf, buf_size, timeout)) {
+				dprintf("No data recieved, returned -1");
+        return -1;
+			} else {
+				dprintf("Data recieved");
+			}
       dprintf(buf);
 
       next_start = string_read_field(buf, str_start, field, buf_size, sep);
@@ -122,14 +145,20 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
 
     char field2[buf_size];
 
-    serial_readline(buf, buf_size);
+    //serial_readline(buf, buf_size);
+    if (!serial_readline(buf, buf_size, timeout)) {
+      dprintf("No data recieved");
+      return -1;
+    } else {
+      dprintf("Data recieved");
+    }
     string_read_field(buf, 0, field2, buf_size, sep);
     dprintf(field2);
 
     char compe[] = "E\n";
     char compe2[] = "E";
 
-    //Too late to check which one works.
+    //Too tired to check which one works.
     if (strcmp(field2, compe)) {
       return 1;
     } else if (strcmp(field2, compe2)) {
@@ -141,8 +170,8 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
 
     }
 
-
 /*
+    NOTE: Added timeout
     Function to read a single line from the serial buffer up to a
     specified length (length includes the null termination character
     that must be appended onto the string). This function is blocking.
@@ -164,8 +193,10 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
     Returns: the number of bytes read
 
 */
-int16_t serial_readline(char *line, uint16_t line_size) {
+int16_t serial_readline(char *line, uint16_t line_size, int32_t timeout) {
     int bytes_read = 0;    // Number of bytes read from the serial port.
+    int32_t time_waited = 0;
+    int32_t time_to_wait =  millis() + timeout;
 
     // Read until we hit the maximum length, or a newline.
     // One less than the maximum length because we want to add a null terminator.
@@ -173,6 +204,11 @@ int16_t serial_readline(char *line, uint16_t line_size) {
         while (Serial.available() == 0) {
             // There is no data to be read from the serial port.
             // Wait until data is available.
+            time_waited = millis();
+						if (time_waited > time_to_wait) {
+							dprintf("Timeout");
+							return 0;
+						}
         }
 
         line[bytes_read] = (char) Serial.read();

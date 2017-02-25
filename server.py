@@ -265,23 +265,50 @@ def findVertex(latitude, longitude, vertices):
                vertexDist(vertices[v1], v2))
 
 
+def getAck(serial_in):
+
+    # Waits for a message and returns a placeholder message for timeout.
+    try:
+        msg = receive_msg_from_client(serial_in)
+        log_msg(msg)
+        if msg[0] == "A":
+            return True
+        elif msg != "":
+            return False
+    # except KeyboardInterrupt:
+    #    sys.exit()
+    except StopIteration:  # Timed out
+        return False
+
+
+def getMsg(serial_in):
+
+    # Waits for a message and returns a placeholder message for timeout.
+    try:
+        msg = receive_msg_from_client(serial_in)
+        log_msg("Got path:")
+        log_msg(msg)
+        return msg
+    # except KeyboardInterrupt:
+    #    sys.exit()
+    except StopIteration:  # Timed out
+        return "_"
+
+
 # BUG: Currently doesn't handle resetting and stuff.
 def server(serial_in, serial_out):
 
     print("Server activated")
 
     while True:
-        while True:
-            msg = receive_msg_from_client(serial_in)
-            log_msg("Got path: ")
-            log_msg(msg)
+        while True:  # Waits unil valid request.
+            msg = getMsg(serial_in)
             if msg[0] == "R":
                 break
 
-        # Hope that it's a properly formatted R message
+        # Assume that it's a properly formatted R message
         coords = msg[2:].split()
-
-        if len(coords) != 4:
+        if len(coords) != 4:  # Make sure we got all coords
             continue
 
         (lat_s, lon_s, lat_e, lon_e) = coords
@@ -291,6 +318,12 @@ def server(serial_in, serial_out):
         endLat = int(float(lat_e))
         endLon = int(float(lon_e))
 
+        # Check for no displacement
+        if ((startLat == endLat) and (startLon == endLon)):
+            send_msg_to_client(serial_out, "N 0")
+            log_msg("Continued")
+            continue
+
         # Find start and finish
         start = findVertex(startLat, startLon, verticesInfo)
         end = findVertex(endLat, endLon, verticesInfo)
@@ -299,15 +332,15 @@ def server(serial_in, serial_out):
         shortest_path = least_cost_path(g, start, end, cost_distance)
 
         # write the waypoints to client
-
-        # print("Sending messages")
         n = len(shortest_path)
         send_msg_to_client(serial_out, "N {}" .format(n))
 
         if n > 0:
-            while msg != "A\n":  # Wait until server asks for more output.
-                msg = receive_msg_from_client(serial_in)
-                log_msg(msg)
+
+            ack = getAck(serial_in)
+            if not ack:
+                log_msg("Not acknowledged 1")
+                continue
 
             for waypoint in shortest_path:
 
@@ -315,16 +348,18 @@ def server(serial_in, serial_out):
                 send_msg_to_client(serial_out,
                                    "W {} {}" .format(outputLat, outputLon))
 
-                msg = receive_msg_from_client(serial_in)
-                log_msg(msg)
+                ack = getAck(serial_in)  # Completely reset if not given ack.
+                if not ack:
+                    log_msg("Not acknowledged 2")
+                    break
 
-                while msg != "A\n":
-                    msg = receive_msg_from_client(serial_in)
-                    log_msg(msg)
+            if not ack:  # Completely reset if not given proper ack.
+                log_msg("Not acknowledged 3")
+                continue
 
             send_msg_to_client(serial_out, "E")
         else:
-            send_msg_to_client(serial_out, "N 0")
+            continue
 
 
 file_name = "edmonton-roads-2.0.1.txt"
@@ -341,26 +376,13 @@ if __name__ == "__main__":
     log_msg("Opening serial port: {}".format(serial_port_name))
     baudrate = 9600  # [bit/seconds] 115200 also works
 
+    # NOTE: ADDED CHANGE TO CS_MESSAGE.
+
+    """ 2 ways to do the timeouts: sleep 1 second continously looking
+    for inputs or try and figure out the built in timeout function"""
+
     # Open up the connection
     with textserial.TextSerial(
-            serial_port_name, baudrate, newline=None) as ser:
+            serial_port_name, baudrate, timeout=1, newline=None) as ser:
+            log_msg("Restarting server")
             server(ser, ser)
-
-    outputBuffer = []  # Buffer for outputting to std.out
-
-"""
-    # Looks like this code needs to be moved elsewhere.
-    for line in sys.stdin:
-        line = line.split()
-
-        # Skip if line is empty
-        if line == "":
-            continue
-
-        # Arduino requests next data in buffer.
-        if (line[0] == "A") and (outputBuffer):
-            print(outputBuffer.pop(0))
-
-        # Arduino sends request for map.
-        if line[0] == "R":
-"""
