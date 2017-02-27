@@ -1,0 +1,27 @@
+Vishal Patel - EA1
+
+Accessories:
+- 3 (560 Ohm resistors (Green Blue Brown))
+- 4 Red LEDs
+- 1 GREEN LED
+- 2 Buttons
+- 10 Wires
+
+Wiring Instructions:
+Arduino Pin 13 <--> Resistor <--> Longer LED lead |LED| Shorter LED lead <--> Arduino GND
+Arduino Pin 12 <--> Resistor <--> Longer LED lead |LED| Shorter LED lead <--> Arduino GND
+Arduino Pin 11 <--> Resistor <--> Longer LED lead |LED| Shorter LED lead <--> Arduino GND
+Arduino Pin 10 <--> Resistor <--> Longer LED lead |LED| Shorter LED lead <--> Arduino GND
+Arduino Pin 9 <--> Resistor <--> Longer LED lead |LED| Shorter LED lead <--> Arduino GND
+Arduino Pin 7 <--> Button <--> Arduino GND
+Arduino Pin 6 <--> Button <--> Arduino GND
+
+To run the code:
+- From command terminal: 1. Navigate to the CountingLights directory using "cd".
+2. Connect the Arduino to the PC.
+3. Type "make upload" to compile and upload the code to the Arduino.
+
+Assumptions: -The user does not press the decrement button when all the lights
+are off. (It just turns all the lights on.)
+
+Additional Functionality: -None
