@@ -165,7 +165,6 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
     }
 
 /*
-    NOTE: Added timeout
     Function to read a single line from the serial buffer up to a
     specified length (length includes the null termination character
     that must be appended onto the string). This function is blocking.

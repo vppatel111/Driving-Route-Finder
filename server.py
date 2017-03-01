@@ -4,30 +4,37 @@ by: Vishal Patel & Rizwan Qureshi - EB2
 
 Description: This program is the server portion of the Driving Route Finder.
 If run by using "python3 server.py" in the terminal will cause the program to
-enter server mode where the user to request a path can input:
+enter server mode in which the server will first attempt to connect to the
+Arduino client and begin communications if the Arduino is found. The client can
+then request a path from the serial-port by sending:
 "R currentLatitude currentLongitude, destinationLatitude destinationLongitude",
 the server will first find the closest vertices to the start and end points
 and will respond first with "N #_of_nodes" and a buffered output of each
-waypoint to the desired location that is printed when the user inputs "A"
-followed by an enter, when the server runs out of waypoints it will print "E".
+waypoint to the desired location that is printed when the client acknowledgeds
+with "A\n" when the server runs out of waypoints it will output "E\n".
 
 Additionally this program can be imported using server.py to use the
 least_cost_path, read_graph, cost_distance, vertexDist, and findVertex
 functions.
 
-Accessories: None
-Wiring Instructions: None
+Accessories: Joystick, LCD Screen
+Wiring Instructions: Can be found in circuit-wiring.txt
 Additional Functionality: The program contains the minheap.py code developed
 in class.
 
-To run as server: 1. Use the $ python3 server.py command
-2. To send a request for the shortest path to a destination type in stdin:
-"R currentLatitude currentLongitude, destinationLatitude destinationLongitude"
-3. Once a request has been sent the server will output "N #_of_nodes"
-4. The rest of the output will be buffered and sent when the user inputs "A",
-followed by an enter.
-5. When the server is finished printing the waypoints it will output an "E",
-followed by an enter.
+To set up server: 1. Navigate to the Driving-Router-Finder directory.
+2. Use the $ python3 server.py command.
+
+To set up client: 1. Navigate to the Driving-Router-Finder directory.
+2. Ensure the Arduino is connected to the PC.
+3. Use make upload to upload the client code to the Arduin.
+
+To use the program: - We can use the joystick to navigate around the screen.
+- We can use the buttons to zoom in and out of the map.
+- To get the shortest path between 2 points:
+1. Select two points by moving the joystick and click the joystick at the start
+and end points.
+2. Within 1-10 seconds a path from the start and destination will appear.
 
 To use the least_cost_path, read_graph, cost_distance, vertexDist, and
 findVertex functions as well as the minheap class in another program:
@@ -36,8 +43,8 @@ Or
 Use import server <function_name> to import individual components of the server
 module.
 
-Additional information: -Changes made to files: server.py, client.cpp, map.cpp,
-map.h, serial_handling.cpp, serial_handling.h
+Additional information: - Changes made to files: server.py, client.cpp,
+serial_handling.cpp, serial_handling.h
 """
 import csv
 # import sys
