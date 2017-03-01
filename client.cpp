@@ -81,15 +81,23 @@ Decided to make a struct to organize all the functions used in this assignment.
 NOTE: Incase we needed extra memory, I decided that the waypoints will only change
       values rather than storing the new converted waypoint values into another array.
 */
-  // variable used to see if there is already a path printed on the screen
-  bool prev_exist;
+  bool prev_exist; // variable used to see if there is already a path printed on the screen
 
   path_maker() {
     this->prev_exist = false;
   }
 
   void convert_wp_to_map_coord(LonLat32* waypoints) {
-    // converts to the given waypoints to map coordinates for client use
+    /* Converts to the given waypoints to map coordinates for client use
+        Args:
+          waypoints:  A pointer to an array holding the waypoint values. These
+                      values must be the "graphical" values from the csv file that
+                      was given by the server.
+
+        Returns:      This function does not return anything but rather changes
+                      the "graphical" values of the waypoints (from the csv file),
+                      to "map coordinate" values based on the zoom level of the map.
+    */
     for (int index = 0; index < cur_path_len; index++) {
       waypoints[index].lon = longitude_to_x(current_map_num, waypoints[index].lon);
       waypoints[index].lat = latitude_to_y(current_map_num, waypoints[index].lat);
@@ -98,7 +106,15 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
   }
 
   void convert_wp_to_graph_coord(LonLat32* waypoints) {
-    // converts map coordinates of waypoints to graph coordinates given initially by server
+    /* Converts to the given waypoints to map coordinates for client use
+        Args:
+          waypoints:  A pointer to an array holding the waypoint values. These
+                      values must be in "map coordinate" form.
+
+        Returns:      This function does not return anything but rather changes
+                      the "map coordinate" values of the waypoints, to its
+                      equivalent "graphical" values.
+    */
     for (int index = 0; index < cur_path_len; index++) {
       waypoints[index].lon = x_to_longitude(shared_current_map_num, waypoints[index].lon);
       waypoints[index].lat = y_to_latitude(shared_current_map_num, waypoints[index].lat);
@@ -136,9 +152,21 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
   }
 
   bool is_route_on_screen(LonLat32 wp0, LonLat32 wp1) {
-    /*
-    the point (a,c) is wp0 and (b,d) is wp1
-    if the wp is between the boundaries of the screen, return true; else false.
+    /*  Checks to see whether or not the edge consisting of the verticies wp0
+        and wp1 can be displayed.
+
+        Args:
+          wp0:  The waypoint that is adjacent to wp1. The value of this waypoint
+                must be in "map coordinate" form.
+          wp1:  The waypoint that is adjacent to wp2. The value of this waypoint
+                must be in "map coordinate" form.
+
+        Returns:
+          (bool) True:  if the edge can be displayed on the LCD screen.
+          (bool) False: if the edge cannot be displayed on the LCD screen.
+
+        Others:
+          The point (a,c) is wp0 and (b,d) is wp1.
     */
     int32_t a = wp0.lon, b = wp1.lon, c = wp0.lat, d = wp1.lat;
     int32_t boundary_x0 = screen_map_x, boundary_x1 = screen_map_x + 127;
@@ -156,19 +184,39 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
   }
 
   int32_t wp_to_screen_x(int32_t wp_x) {
-    // returns the given x coordinate of the wp ON THE SCREEN
+    /*  Converts the longitude (x value) from the map coordinates to the
+        coordinate position on the screen.
+
+        Args:
+          int32_t wp_x: The map coordinate value in the x direction.
+
+        Returns: X coordinate of the waypoint ON THE SCREEN
+    */
     int32_t r = wp_x - screen_map_x;
     return constrain(r, 0, 128);
   }
 
   int32_t wp_to_screen_y(int32_t wp_y) {
-    // returns the given y coordinate of the wp ON THE SCREEN
-    int32_t r = wp_y - screen_map_y;
+    /*  Converts the latitude (y value) from the map coordinates to the
+        coordinate position on the screen.
+
+        Args:
+          int32_t wp_y: The map coordinate value in the y direction.
+
+        Returns: Y coordinate of the waypoint ON THE SCREEN
+    */    int32_t r = wp_y - screen_map_y;
     return constrain(r, 0, 160);
   }
 
   void print_to_lcd(LonLat32* wp) {
-    // function that prints the path onto the lcd screen
+    /* Prints the path onto the lcd screen
+
+        Args:
+          wp: A pointer to an array holding the waypoint values. These
+              values must be in "map coordinate" form.
+
+        Retuns: (Nothing)
+    */
     for (int i = 0; i < cur_path_len-1; i++) {
       if (is_route_on_screen(wp[i], wp[i+1])) {
         //x0 = wp_to_screen_x(wp[i].lon), x1 = wp_to_screen_x(wp[i+1].lon)
@@ -183,7 +231,7 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
   }
 
   void print_only_edge(LonLat32* wp) {
-    //yet to be tested
+    //yet to be tested, unnessisary function
     uint16_t cursor_screen_x, cursor_screen_y;
     get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y);
     for (int i = 0; i < cur_path_len-1; i++) {
@@ -492,12 +540,6 @@ void loop() {
 
 
                 if (srv_get_waypoints(waypoints, path_len, max_path_len) >= 0) {
-                    /*
-                        YOUR TASK: This is a place holder for the code you need
-                        to write. This simply generates a diagnostic message.
-                        TODO: Account for over 100 paths.
-                    */
-
                     //Check if values are correctly assigned.
                     dprintf("Waypoints (lat, lon):");
                     for (int16_t i=0; i < cur_path_len; i++) {
@@ -532,11 +574,6 @@ void loop() {
 
         // find the waypoints on the current tile and draw as lines
         if ( cur_path_len > 1 ) {
-            /*
-                YOUR TASK: Map the waypoints into map locations, which
-                are then mapped into screen locations, and draw them if
-                they are visible.
-            */
             path.print_to_lcd(waypoints);
         }
 
