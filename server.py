@@ -35,9 +35,12 @@ findVertex functions as well as the minheap class in another program:
 Or
 Use import server <function_name> to import individual components of the server
 module.
+
+Additional information: -Changes made to files: server.py, client.cpp, map.cpp,
+map.h, serial_handling.cpp, serial_handling.h
 """
 import csv
-import sys
+# import sys
 from cs_message import *
 from math import sqrt
 
@@ -248,7 +251,6 @@ def vertexDist(v, u):
     return pathDist
 
 
-# Further testing required
 def findVertex(latitude, longitude, vertices):
     ''' Returns closes vertex to given latitude and longitude
 
@@ -266,43 +268,60 @@ def findVertex(latitude, longitude, vertices):
 
 
 def getAck(serial_in):
+    ''' Waits for a acknowledgement from the client and returns a false in the
+        case of a timeout and true otherwise.
 
-    # Waits for a message and returns a placeholder message for timeout.
-    try:
+    Args:
+        serial_in - serial object used to obtain data from the serial port
+    Returns:
+        bool state - true if acknowledgement found otherwise returns false
+    '''
+
+    try:  # Waits for message if timeout, we get exception StopIteration.
         msg = receive_msg_from_client(serial_in)
         log_msg(msg)
         if msg[0] == "A":
             return True
         elif msg != "":
             return False
-    # except KeyboardInterrupt:
-    #    sys.exit()
     except StopIteration:  # Timed out
         return False
 
 
 def getMsg(serial_in):
+    ''' Waits for a message from the client and returns the message, in the
+        case of a timeout it will return an invalid message ("_").
 
-    # Waits for a message and returns a placeholder message for timeout.
-    try:
+    Args:
+        serial_in - (serial object), used to obtain data from the serial port
+    Returns:
+        msg - message read from serial port or ("_") if no message found.
+    '''
+
+    try:  # Waits for message if timeout, we get exception StopIteration.
         msg = receive_msg_from_client(serial_in)
-        log_msg("Got path:")
+        # log_msg("Got path:")
         log_msg(msg)
         return msg
-    # except KeyboardInterrupt:
-    #    sys.exit()
     except StopIteration:  # Timed out
         return "_"
 
 
 def server(serial_in, serial_out):
+    ''' Contains a finite state machine in charge of processing inputs and
+        sending out data.
 
-    print("Server activated")
+    Args:
+        serial_in - (serial object), used to obtain data from the serial port
+        serial_out - (serial object), used to send data to the serial port
+    Returns:
+        None
+    '''
 
     while True:
-        while True:  # Waits unil valid request.
+        while True:  # Waits unil valid request from waypoints..
             msg = getMsg(serial_in)
-            if msg[0] == "R":
+            if msg[0] == "R":  # Is message found valid in context.
                 break
 
         # Assume that it's a properly formatted R message
@@ -317,10 +336,10 @@ def server(serial_in, serial_out):
         endLat = int(float(lat_e))
         endLon = int(float(lon_e))
 
-        # Check for no displacement
+        # Check for zero displacement
         if ((startLat == endLat) and (startLon == endLon)):
             send_msg_to_client(serial_out, "N 0")
-            log_msg("Continued")
+            log_msg("Zero displacement")
             continue
 
         # Find start and finish
@@ -330,34 +349,34 @@ def server(serial_in, serial_out):
         # Calculate shortest path
         shortest_path = least_cost_path(g, start, end, cost_distance)
 
-        # write the waypoints to client
+        # Write the number of waypoints to client
         n = len(shortest_path)
         send_msg_to_client(serial_out, "N {}" .format(n))
 
-        if n > 0:
+        if n > 0:  # If non-zero path
 
-            ack = getAck(serial_in)
+            ack = getAck(serial_in)  # Wait for client acknowledgement
             if not ack:
-                log_msg("Not acknowledged 1")
+                log_msg("Timeout: No Ack")
                 continue
 
-            for waypoint in shortest_path:
+            for waypoint in shortest_path:  # Begin printing waypoints
 
                 (outputLat, outputLon) = verticesInfo[waypoint]
                 send_msg_to_client(serial_out,
                                    "W {} {}" .format(outputLat, outputLon))
 
-                ack = getAck(serial_in)  # Completely reset if not given ack.
-                if not ack:
-                    log_msg("Not acknowledged 2")
+                ack = getAck(serial_in)
+                if not ack:  # Completely reset if not given ack. (Part 1)
+                    log_msg("Timeout: No Ack")
                     break
 
-            if not ack:  # Completely reset if not given proper ack.
-                log_msg("Not acknowledged 3")
+            if not ack:  # Completely reset if not given ack. (Part 2)
+                log_msg("Timeout: No Ack")
                 continue
 
-            send_msg_to_client(serial_out, "E")
-        else:
+            send_msg_to_client(serial_out, "E")  # Finished printing waypoints
+        else:  # Otherwise begin waiting for new request.
             continue
 
 
@@ -375,12 +394,7 @@ if __name__ == "__main__":
     log_msg("Opening serial port: {}".format(serial_port_name))
     baudrate = 9600  # [bit/seconds] 115200 also works
 
-    # NOTE: ADDED CHANGE TO CS_MESSAGE.
-
-    """ 2 ways to do the timeouts: sleep 1 second continously looking
-    for inputs or try and figure out the built in timeout function"""
-
-    # Open up the connection
+    # Open up the connection, with timeout of 1 second.
     with textserial.TextSerial(
             serial_port_name, baudrate, timeout=1, newline=None) as ser:
             log_msg("Restarting server")
