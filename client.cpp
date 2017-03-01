@@ -1,3 +1,7 @@
+/* Delta x:
+  - PathMaker Structure
+  - Rest of the changes to the select event.
+*/
 #include <Arduino.h>
 #include <Adafruit_ST7735.h>
 #include <SD.h>
@@ -516,7 +520,7 @@ void loop() {
             dprintf("Requesting lat %ld lon %ld to lat %ld lon %ld",
                 start.lat, start.lon, end.lat, end.lon);
 
-            Serial.print("R ");
+            Serial.print("R "); //Printing request.
             Serial.print(start.lat);
             Serial.print(" ");
             Serial.print(start.lon);
@@ -525,9 +529,7 @@ void loop() {
             Serial.print(" ");
             Serial.println(end.lon);
 
-            dprintf("Getting path len");
-
-            int16_t path_len = srv_get_pathlen(start, end);
+            int16_t path_len = srv_get_pathlen(start, end); //Get's path length.
 
             if ( path_len > 0 ) {
                 update_display_window = 1;
