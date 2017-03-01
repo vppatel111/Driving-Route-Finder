@@ -188,20 +188,35 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
         coordinate position on the screen.
 
         Args:
-    returns the given x coordinate of the wp ON THE SCREEN
+          int32_t wp_x: The map coordinate value in the x direction.
+
+        Returns: X coordinate of the waypoint ON THE SCREEN
     */
     int32_t r = wp_x - screen_map_x;
     return constrain(r, 0, 128);
   }
 
   int32_t wp_to_screen_y(int32_t wp_y) {
-    // returns the given y coordinate of the wp ON THE SCREEN
-    int32_t r = wp_y - screen_map_y;
+    /*  Converts the latitude (y value) from the map coordinates to the
+        coordinate position on the screen.
+
+        Args:
+          int32_t wp_y: The map coordinate value in the y direction.
+
+        Returns: Y coordinate of the waypoint ON THE SCREEN
+    */    int32_t r = wp_y - screen_map_y;
     return constrain(r, 0, 160);
   }
 
   void print_to_lcd(LonLat32* wp) {
-    // function that prints the path onto the lcd screen
+    /* Prints the path onto the lcd screen
+
+        Args:
+          wp: A pointer to an array holding the waypoint values. These
+              values must be in "map coordinate" form.
+
+        Retuns: (Nothing)
+    */
     for (int i = 0; i < cur_path_len-1; i++) {
       if (is_route_on_screen(wp[i], wp[i+1])) {
         //x0 = wp_to_screen_x(wp[i].lon), x1 = wp_to_screen_x(wp[i+1].lon)
@@ -216,7 +231,7 @@ NOTE: Incase we needed extra memory, I decided that the waypoints will only chan
   }
 
   void print_only_edge(LonLat32* wp) {
-    //yet to be tested
+    //yet to be tested, unnessisary function
     uint16_t cursor_screen_x, cursor_screen_y;
     get_cursor_screen_x_y(&cursor_screen_x, &cursor_screen_y);
     for (int i = 0; i < cur_path_len-1; i++) {
@@ -525,12 +540,6 @@ void loop() {
 
 
                 if (srv_get_waypoints(waypoints, path_len, max_path_len) >= 0) {
-                    /*
-                        YOUR TASK: This is a place holder for the code you need
-                        to write. This simply generates a diagnostic message.
-                        TODO: Account for over 100 paths.
-                    */
-
                     //Check if values are correctly assigned.
                     dprintf("Waypoints (lat, lon):");
                     for (int16_t i=0; i < cur_path_len; i++) {
@@ -565,11 +574,6 @@ void loop() {
 
         // find the waypoints on the current tile and draw as lines
         if ( cur_path_len > 1 ) {
-            /*
-                YOUR TASK: Map the waypoints into map locations, which
-                are then mapped into screen locations, and draw them if
-                they are visible.
-            */
             path.print_to_lcd(waypoints);
         }
 
