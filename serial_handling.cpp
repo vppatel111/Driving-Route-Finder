@@ -30,7 +30,7 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
     const char* sep = " ";
     char validCommand[] = "N";
     int next_start = 0;
-    int32_t timeout = 1000;
+    int32_t timeout = 10000;
 
     int32_t path_len = 0;
 
@@ -100,7 +100,7 @@ int16_t srv_get_waypoints(LonLat32* waypoints, int16_t path_len,
     char buf[buf_size];
     char field[buf_size];
     const char* sep = " ";
-    int32_t timeout = 10000;
+    int32_t timeout = 1000;
 
     Serial.print("A\n");
     dprintf("Fetching %d way points, keeping at most %d",

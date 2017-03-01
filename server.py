@@ -295,7 +295,6 @@ def getMsg(serial_in):
         return "_"
 
 
-# BUG: Currently doesn't handle resetting and stuff.
 def server(serial_in, serial_out):
 
     print("Server activated")
