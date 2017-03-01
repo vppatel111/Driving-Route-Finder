@@ -14,11 +14,9 @@
     waypoints along the path from start to end.
 
     Inputs:
-
     start, end - the start and end point of the requested path
 
     Returns:
-
     the length of the path, -1 if an error occurred
 
 */
@@ -31,20 +29,16 @@ int16_t srv_get_pathlen(LonLat32 start, LonLat32 end) {
     char validCommand[] = "N";
     int next_start = 0;
     int32_t timeout = 10000;
-
     int32_t path_len = 0;
 
-    dprintf("Beginning finding pathLen");
     //serial_readline(buf, buf_size, timeout);
     if (!serial_readline(buf, buf_size, timeout)) {
-      dprintf("No data recieved");
+      dprintf("Timeout");
       return(-1);
-    } else {
-      dprintf("Data recieved");
     }
     dprintf(buf);
 
-    // Check for valid command
+    // Ensure the server sent a valid command
     next_start = string_read_field(buf, 0, field, buf_size, sep);
     dprintf(field);
 
