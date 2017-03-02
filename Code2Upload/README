@@ -1,0 +1,50 @@
+Client and Server for Driving Route Finder
+by: Vishal Patel & Rizwan Qureshi - EB2
+
+Description: This folder contains the client, server and all modified files
+needed to run both programs. To run the program, the server and client must be
+run in conjunction. After both programs are running, the user can navigate
+around a map of Edmonton using a joystick and select two waypoints by clicking
+the joystick. Then the shortest path will be drawn from the start and end points.
+
+Additionally the server can be imported using import server.py to use the
+least_cost_path, read_graph, cost_distance, vertexDist, and findVertex
+functions.
+
+Accessories: Joystick, LCD Screen
+Wiring Instructions: Can be found in circuit-wiring.txt
+Additional Functionality: The program contains the minheap.py code developed
+in class.
+
+Note: Before you begin, ensure all non-modified files are placed in the directory.
+
+To set up server: 1. Navigate to the Driving-Router-Finder directory.
+2. Use the $ python3 server.py command.
+
+To set up client: 1. Ensure the instructions in circuit-wiring.txt are followed.
+2. Ensure the yeg-1.lcd, yeg-2.lcd, yeg-3.lcd, yeg-4.lcd, yeg-5.lcd, yeg-6.lcd
+files are loaded onto the SD card of the Arduino.
+3. Navigate to the Driving-Router-Finder directory.
+4. Ensure the Arduino is connected to the PC.
+5. Use make upload to upload the client code to the Arduino.
+
+To use the program: - We can use the joystick to navigate around the screen.
+- We can use the buttons to zoom in and out of the map.
+- To get the shortest path between 2 points:
+1. Select two points by moving the joystick and click the joystick at the start
+and end points.
+2. A path from the start and destination will appear, the time of appearance
+depends on the length of the path.
+
+To use the least_cost_path, read_graph, cost_distance, vertexDist, and
+findVertex functions as well as the minheap class in another program:
+1. Use import server to import entire server module.
+Or
+Use import server <function_name> to import individual components of the server
+module.
+
+Additional information: - Changes made to the following files: server.py,
+client.cpp, serial_handling.cpp, serial_handling.h
+- Needs following files to run: adjacencygraph.py, client.cpp, core_types.h,
+cs_message.py, dprintf.cpp, dprintf.h, edmonton-roads-2.0.1.txt, makefile,
+map.cpp, map.h, serial_handling.cpp, serial_handling.h, server.py, textserial.py
